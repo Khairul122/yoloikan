@@ -1,0 +1,100 @@
+{
+  "@@locale": "en",
+
+  "navHome": "Home",
+  "navCamera": "Camera",
+  "navHistory": "History",
+  "navSettings": "Settings",
+
+  "chooseMode": "Choose Mode",
+  "realtimeDetection": "Real-time Detection",
+  "useCameraDirect": "Use the live camera",
+  "uploadImage": "Upload Image",
+  "pickFromGallery": "Pick from gallery",
+  "quickGuide": "Quick Guide",
+  "goodLighting": "Good Lighting",
+  "goodLightingDesc": "Make sure the fish is clearly visible with good lighting for more accurate detection.",
+  "focusOnObject": "Focus on the Object",
+  "focusOnObjectDesc": "Aim the camera or pick a photo that shows the whole fish without other objects in the way.",
+  "welcomeTitle": "Welcome to\nthe Data Ocean",
+  "welcomeDesc": "Identify fish species quickly and accurately using Yolo technology.",
+
+  "uploadGalleryTitle": "Upload Gallery",
+  "detectionResults": "Detection Results",
+  "tapResultHint": "Tap a result to view species details",
+  "analyzingImage": "Analyzing image...",
+  "emptyGalleryHint": "Tap the button below to\npick a fish photo from your gallery.",
+  "tapToPickPhoto": "Tap to pick a photo",
+  "pickImage": "Pick Image",
+
+  "historyTitle": "Detection History",
+  "clearHistoryDialogTitle": "Clear History",
+  "searchSpeciesHint": "Search species...",
+  "noMatchingResults": "No matching results",
+  "noHistoryYet": "No detection history yet",
+
+  "description": "Description",
+  "scanAgain": "Scan Again",
+  "confidentPercent": "{value}% confident",
+  "@confidentPercent": {
+    "placeholders": { "value": { "type": "String" } }
+  },
+
+  "liveDetection": "Live Detection",
+  "targetLocked": "Target Locked",
+  "accuracyLabel": "Accuracy",
+  "aimCameraHint": "Point the camera at a fish...",
+  "back": "Back",
+  "cameraPermissionRequired": "Camera Permission Required",
+  "cameraPermissionDesc": "Allow camera access to use the real-time detection feature.",
+  "tryAgain": "Try Again",
+
+  "settingsTitle": "Settings",
+  "aboutAppSection": "About App",
+  "appNameLabel": "App Name",
+  "versionLabel": "Version",
+  "modelAiLabel": "Yolo Model",
+  "dataSection": "Data",
+  "logout": "Logout",
+  "logoutConfirm": "Are you sure you want to logout?",
+  "cancel": "Cancel",
+  "delete": "Delete",
+  "deleteHistoryItemConfirm": "This history item will be permanently deleted. Continue?",
+  "swipeToDeleteHint": "Swipe left to delete an item",
+
+  "preferencesSection": "Preferences",
+  "notification": "Notification",
+  "notificationDesc": "Receive notifications from the app",
+  "darkMode": "Dark Mode",
+  "darkModeDesc": "Use a dark theme for the app",
+  "language": "Language",
+  "languageDesc": "Choose the app language",
+
+  "moreSection": "More",
+  "helpCenter": "Help Center",
+  "privacyPolicy": "Privacy Policy",
+  "aboutApp": "About App",
+  "featureInDevelopment": "This feature is under development.",
+  "info": "Info",
+  "ok": "OK",
+
+  "developerSection": "Developer",
+  "developerName": "Name",
+  "developerNim": "Student ID",
+
+  "chooseImageSource": "Choose Image Source",
+  "takePhoto": "Take Photo",
+  "lowConfidenceHint": "Possibly not a fish",
+  "modelLoadFailedMsg": "Failed to load Yolo model. Make sure the model file is valid.",
+  "noFishDetectedMsg": "No fish detected. Try a clearer photo.",
+  "splashTagline": "Yolo-Powered Marine Species Detection",
+  "initializingSystem": "Initializing System",
+  "unknownErrorMsg": "An error occurred: {message}",
+  "@unknownErrorMsg": {
+    "placeholders": {
+      "message": {
+        "type": "String"
+      }
+    }
+  }
+}

@@ -1,0 +1,100 @@
+{
+  "@@locale": "id",
+
+  "navHome": "Home",
+  "navCamera": "Kamera",
+  "navHistory": "History",
+  "navSettings": "Settings",
+
+  "chooseMode": "Pilih Mode",
+  "realtimeDetection": "Deteksi Real-time",
+  "useCameraDirect": "Gunakan kamera langsung",
+  "uploadImage": "Unggah Gambar",
+  "pickFromGallery": "Pilih dari galeri",
+  "quickGuide": "Panduan Cepat",
+  "goodLighting": "Pencahayaan Cukup",
+  "goodLightingDesc": "Pastikan objek ikan terlihat jelas dengan pencahayaan yang baik agar deteksi lebih akurat.",
+  "focusOnObject": "Fokus pada Objek",
+  "focusOnObjectDesc": "Arahkan kamera atau pilih foto yang menampilkan ikan secara utuh tanpa terhalang objek lain.",
+  "welcomeTitle": "Selamat Datang di\nLautan Data",
+  "welcomeDesc": "Identifikasi spesies ikan secara cepat dan akurat menggunakan teknologi Yolo.",
+
+  "uploadGalleryTitle": "Upload Galeri",
+  "detectionResults": "Hasil Deteksi",
+  "tapResultHint": "Ketuk hasil untuk melihat detail spesies",
+  "analyzingImage": "Menganalisis gambar...",
+  "emptyGalleryHint": "Tekan tombol di bawah untuk\nmemilih foto ikan dari galeri.",
+  "tapToPickPhoto": "Ketuk untuk memilih foto",
+  "pickImage": "Pilih Gambar",
+
+  "historyTitle": "Riwayat Deteksi",
+  "clearHistoryDialogTitle": "Hapus Riwayat",
+  "searchSpeciesHint": "Cari spesies...",
+  "noMatchingResults": "Tidak ada hasil yang cocok",
+  "noHistoryYet": "Belum ada riwayat deteksi",
+
+  "description": "Deskripsi",
+  "scanAgain": "Scan Lagi",
+  "confidentPercent": "{value}% yakin",
+  "@confidentPercent": {
+    "placeholders": { "value": { "type": "String" } }
+  },
+
+  "liveDetection": "Deteksi Langsung",
+  "targetLocked": "Target Terkunci",
+  "accuracyLabel": "Akurasi",
+  "aimCameraHint": "Arahkan kamera ke ikan...",
+  "back": "Kembali",
+  "cameraPermissionRequired": "Izin Kamera Diperlukan",
+  "cameraPermissionDesc": "Izinkan akses kamera untuk menggunakan fitur deteksi real-time.",
+  "tryAgain": "Coba Lagi",
+
+  "settingsTitle": "Settings",
+  "aboutAppSection": "Tentang Aplikasi",
+  "appNameLabel": "Nama Aplikasi",
+  "versionLabel": "Versi",
+  "modelAiLabel": "Model Yolo",
+  "dataSection": "Data",
+  "logout": "Logout",
+  "logoutConfirm": "Apakah Anda yakin ingin logout?",
+  "cancel": "Batal",
+  "delete": "Hapus",
+  "deleteHistoryItemConfirm": "Item riwayat ini akan dihapus permanen. Lanjutkan?",
+  "swipeToDeleteHint": "Geser ke kiri untuk menghapus item",
+
+  "preferencesSection": "Preferences",
+  "notification": "Notifikasi",
+  "notificationDesc": "Terima pemberitahuan dari aplikasi",
+  "darkMode": "Mode Gelap",
+  "darkModeDesc": "Gunakan tema gelap untuk aplikasi",
+  "language": "Bahasa",
+  "languageDesc": "Pilih bahasa aplikasi",
+
+  "moreSection": "More",
+  "helpCenter": "Pusat Bantuan",
+  "privacyPolicy": "Kebijakan Privasi",
+  "aboutApp": "Tentang Aplikasi",
+  "featureInDevelopment": "Fitur ini sedang dalam pengembangan.",
+  "info": "Info",
+  "ok": "OK",
+
+  "developerSection": "Pengembang",
+  "developerName": "Nama",
+  "developerNim": "NIM",
+
+  "chooseImageSource": "Pilih Sumber Gambar",
+  "takePhoto": "Ambil Foto",
+  "lowConfidenceHint": "Kemungkinan bukan ikan",
+  "modelLoadFailedMsg": "Model Yolo gagal dimuat. Pastikan file model valid.",
+  "noFishDetectedMsg": "Tidak ada ikan terdeteksi. Coba foto yang lebih jelas.",
+  "splashTagline": "Deteksi Spesies Laut Bertenaga Yolo",
+  "initializingSystem": "Memuat Sistem",
+  "unknownErrorMsg": "Terjadi kesalahan: {message}",
+  "@unknownErrorMsg": {
+    "placeholders": {
+      "message": {
+        "type": "String"
+      }
+    }
+  }
+}

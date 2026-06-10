@@ -1,0 +1,44 @@
+[
+  {
+    "id": 0,
+    "nama": "Ikan Baramundi",
+    "deskripsi": "Dikenal juga sebagai Kakap Putih liar. Memiliki bentuk tubuh memanjang dengan mulut besar dan rahang atas yang melewati mata. Biasanya hidup di perairan pesisir, muara, dan air tawar.",
+    "warna": "#FF5733"
+  },
+  {
+    "id": 1,
+    "nama": "Ikan Belanak Merah",
+    "deskripsi": "Varietas ikan belanak yang memiliki ciri khas semburat kemerahan atau keperakan pada sisiknya. Hidup bergerombol di area estuari, hutan bakau, dan perairan pantai yang dangkal.",
+    "warna": "#FF1493"
+  },
+  {
+    "id": 2,
+    "nama": "Ikan Cakalang",
+    "deskripsi": "Ikan pelagis dari keluarga Scombridae (kerabat tuna). Tubuhnya mulus tanpa sisik dengan garis-garis hitam yang khas di bagian perut. Memiliki nilai komersial yang sangat tinggi.",
+    "warna": "#1E90FF"
+  },
+  {
+    "id": 3,
+    "nama": "Ikan Kakap Putih",
+    "deskripsi": "Hasil budidaya atau tangkapan laut dengan ciri khas tubuh berwarna perak mengkilap dan mata yang cenderung memantulkan cahaya kemerahan di kegelapan. Dagingnya tebal dan sangat populer.",
+    "warna": "#00CED1"
+  },
+  {
+    "id": 4,
+    "nama": "Ikan Kembung",
+    "deskripsi": "Ikan laut kecil berlemak sehat yang berkerabat dengan makarel. Memiliki tubuh ramping, warna biru kehijauan di bagian punggung, dan garis-garis gelap samar di sepanjang tubuhnya.",
+    "warna": "#32CD32"
+  },
+  {
+    "id": 5,
+    "nama": "Ikan Sarden",
+    "deskripsi": "Ikan minyak berukuran kecil yang hidup bergerombol dalam jumlah besar. Sering dijumpai dalam bentuk olahan kalengan, namun dalam kondisi segar memiliki kulit keperakan yang sangat terang.",
+    "warna": "#FFA500"
+  },
+  {
+    "id": 6,
+    "nama": "Non Ikan",
+    "deskripsi": "Kategori objek deteksi selain ikan asli, mencakup: (1) lukisan, ilustrasi, atau gambar ikan yang bukan foto nyata, (2) objek yang bentuknya mirip ikan tapi bukan ikan seperti sampah laut, terumbu karang, tanaman air, alat tangkap, atau biota laut lain (kepiting, cumi-cumi), dan (3) objek tidak dikenal lainnya. Akurasi deteksi pada gambar lukisan/ilustrasi bergantung pada data latih model.",
+    "warna": "#A9A9A9"
+  }
+]
