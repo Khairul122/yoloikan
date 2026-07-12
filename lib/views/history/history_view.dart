@@ -41,7 +41,9 @@ class _HistoryViewState extends State<HistoryView>
 
   void _reload() {
     if (!mounted) return;
-    setState(() => _future = HistoryRepository.getAll());
+    setState(() {
+      _future = HistoryRepository.getAll();
+    });
   }
 
   Future<bool> _confirmDeleteItem() async {
@@ -277,6 +279,12 @@ class _HistoryCard extends StatelessWidget {
                         ? Image.file(
                             File(item.photoPath!),
                             fit: BoxFit.cover,
+                            // Tanpa cacheWidth/cacheHeight, tiap thumbnail
+                            // 64x64 tetap decode foto resolusi penuh dari
+                            // kamera (bisa puluhan MB per foto) — daftar
+                            // riwayat yang panjang bisa memicu OOM.
+                            cacheWidth: 192,
+                            cacheHeight: 192,
                             errorBuilder: (_, __, ___) =>
                                 _Fallback(color: color),
                           )

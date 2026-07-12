@@ -1,36 +1,22 @@
 import 'package:flutter/foundation.dart';
-import 'package:flutter_vision/flutter_vision.dart';
+import 'package:ultralytics_yolo/ultralytics_yolo.dart';
 import '../core/constants/app_constants.dart';
 
 class RealtimeController extends ChangeNotifier {
-  FlutterVision? _vision;
-  bool _modelLoaded = false;
+  YOLOViewController? _viewController;
   String? _error;
 
-  String? get error => _error;
-
-  /// Memuat model sekali saja; aman dipanggil berulang kali.
-  Future<FlutterVision> ensureModelLoaded() async {
-    if (_modelLoaded && _vision != null) return _vision!;
-    _vision = FlutterVision();
-    try {
-      await _vision!.loadYoloModel(
-        modelPath: AppConstants.modelPath,
-        labels: AppConstants.labelsPath,
-        modelVersion: AppConstants.yoloModelVersion,
-        quantization: false,
-        numThreads: 2,
-        useGpu: false,
-        isAsset: true,
-      );
-      _modelLoaded = true;
-    } catch (e) {
-      _vision = null;
-      _modelLoaded = false;
-      rethrow;
+  YOLOViewController get viewController {
+    if (_viewController == null) {
+      _viewController = YOLOViewController();
+      // Hanya tampilkan 1 bounding box dengan confidence tertinggi
+      _viewController!.setNumItemsThreshold(1);
     }
-    return _vision!;
+    return _viewController!;
   }
+
+  String get modelPath => AppConstants.modelPath;
+  String? get error => _error;
 
   void onViewError(String message) {
     _error = message;
@@ -39,8 +25,8 @@ class RealtimeController extends ChangeNotifier {
 
   @override
   void dispose() {
-    _vision?.closeYoloModel();
-    _vision = null;
+    _viewController?.dispose();
+    _viewController = null;
     super.dispose();
   }
 }

@@ -1,11 +1,9 @@
 import 'dart:async';
-import 'dart:typed_data';
 import 'dart:ui';
-import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_vision/flutter_vision.dart';
 import 'package:yoloikan/l10n/app_localizations.dart';
 import 'package:provider/provider.dart';
+import 'package:ultralytics_yolo/ultralytics_yolo.dart';
 import '../../controllers/realtime_controller.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/constants/app_constants.dart';
@@ -14,20 +12,6 @@ import '../../core/utils/permission_helper.dart';
 import '../../services/history_repository.dart';
 import '../../services/ikan_repository.dart';
 import '../detail/species_detail_view.dart';
-
-/// Top-1 hasil deteksi live, dibangun dari map mentah `flutter_vision`
-/// (`box`: [x1,y1,x2,y2,conf], `tag`: nama kelas) + `classIndex` yang
-/// diresolusi lewat `IkanRepository.findByName`.
-class _LiveResult {
-  final String className;
-  final double confidence;
-  final int classIndex;
-  const _LiveResult({
-    required this.className,
-    required this.confidence,
-    required this.classIndex,
-  });
-}
 
 class RealtimeView extends StatefulWidget {
   const RealtimeView({super.key});
@@ -43,14 +27,8 @@ class _RealtimeViewState extends State<RealtimeView>
   bool _checkingPermission = true;
   bool _isActive = true;
 
-  // Kamera & deteksi
-  CameraController? _camera;
-  FlutterVision? _vision;
-  bool _cameraReady = false;
-  bool _isDetecting = false;
-
   // Detection state
-  _LiveResult? _topResult;
+  YOLOResult? _topResult;
   String? _stableClass;
   Timer? _stableTimer;
   bool _isNavigating = false;
@@ -75,7 +53,6 @@ class _RealtimeViewState extends State<RealtimeView>
     _stableTimer?.cancel();
     _progressCtrl.dispose();
     WidgetsBinding.instance.removeObserver(this);
-    _disposeCamera();
     super.dispose();
   }
 
@@ -84,12 +61,7 @@ class _RealtimeViewState extends State<RealtimeView>
     if (!mounted) return;
     final resumed = state == AppLifecycleState.resumed;
     setState(() => _isActive = resumed);
-    if (!resumed) {
-      _resetStable();
-      _disposeCamera();
-    } else if (_cameraPermission) {
-      _initCamera();
-    }
+    if (!resumed) _resetStable();
   }
 
   Future<void> _checkPermission() async {
@@ -99,113 +71,31 @@ class _RealtimeViewState extends State<RealtimeView>
       _cameraPermission = granted;
       _checkingPermission = false;
     });
-    if (granted) await _initCamera();
-  }
-
-  Future<void> _disposeCamera() async {
-    final camera = _camera;
-    _camera = null;
-    _cameraReady = false;
-    if (camera != null) {
-      if (camera.value.isStreamingImages) {
-        await camera.stopImageStream();
-      }
-      await camera.dispose();
-    }
-  }
-
-  Future<void> _initCamera() async {
-    try {
-      final vision = await context.read<RealtimeController>().ensureModelLoaded();
-      final cameras = await availableCameras();
-      final backCamera = cameras.firstWhere(
-        (c) => c.lensDirection == CameraLensDirection.back,
-        orElse: () => cameras.first,
-      );
-      final controller = CameraController(
-        backCamera,
-        ResolutionPreset.medium,
-        enableAudio: false,
-        imageFormatGroup: ImageFormatGroup.yuv420,
-      );
-      await controller.initialize();
-      if (!mounted) {
-        await controller.dispose();
-        return;
-      }
-      await controller.startImageStream(_onCameraImage);
-      setState(() {
-        _camera = controller;
-        _vision = vision;
-        _cameraReady = true;
-      });
-    } catch (e) {
-      if (!mounted) return;
-      context.read<RealtimeController>().onViewError(e.toString());
-    }
   }
 
   // ── Detection callback ────────────────────────────────────────────────
 
-  void _onCameraImage(CameraImage image) {
-    if (_isDetecting || !_isActive || _isNavigating || _vision == null) return;
-    _isDetecting = true;
-    _detect(image).whenComplete(() => _isDetecting = false);
-  }
-
-  Future<void> _detect(CameraImage image) async {
-    try {
-      final raw = await _vision!.yoloOnFrame(
-        bytesList: image.planes.map((p) => p.bytes).toList(),
-        imageHeight: image.height,
-        imageWidth: image.width,
-        iouThreshold: AppConstants.iouThreshold,
-        confThreshold: AppConstants.confidenceThreshold,
-        classThreshold: AppConstants.confidenceThreshold,
-      );
-      await _handleDetectionResult(raw);
-    } catch (_) {
-      // Frame tunggal gagal diproses — abaikan, coba lagi di frame berikutnya.
-    }
-  }
-
-  Future<void> _handleDetectionResult(List<Map<String, dynamic>> raw) async {
+  void _onDetectionResult(List<YOLOResult> results) {
     if (!mounted || !_isActive || _isNavigating) return;
 
-    // Top-1: ambil kotak dengan confidence tertinggi.
-    Map<String, dynamic>? topBox;
-    double bestConf = -1;
-    for (final r in raw) {
-      final conf = ((r['box'] as List)[4] as num).toDouble();
-      if (conf > bestConf) {
-        bestConf = conf;
-        topBox = r;
-      }
-    }
+    // Top-1: ambil yang confidence tertinggi
+    YOLOResult? top;
+    if (results.isNotEmpty) {
+      top = results.reduce((a, b) => a.confidence >= b.confidence ? a : b);
 
-    _LiveResult? top;
-    if (topBox != null) {
-      final className = topBox['tag'] as String;
       // Model tidak punya kelas "Non Ikan" sendiri — confidence di bawah
       // identificationThreshold sering merupakan objek non-ikan,
       // reklasifikasi ke "Non Ikan" agar konsisten dengan GalleryController.
-      if (bestConf < AppConstants.identificationThreshold) {
-        top = _LiveResult(
-          className: 'non_ikan',
-          confidence: bestConf,
+      if (top.confidence < AppConstants.identificationThreshold) {
+        top = YOLOResult(
           classIndex: AppConstants.nonFishClassIndex,
-        );
-      } else {
-        final species = await IkanRepository.findByName(className);
-        top = _LiveResult(
-          className: className,
-          confidence: bestConf,
-          classIndex: species?.id ?? AppConstants.nonFishClassIndex,
+          className: 'non_ikan',
+          confidence: top.confidence,
+          boundingBox: top.boundingBox,
+          normalizedBox: top.normalizedBox,
         );
       }
     }
-
-    if (!mounted || !_isActive || _isNavigating) return;
 
     if (top?.className != _topResult?.className) {
       setState(() => _topResult = top);
@@ -237,7 +127,7 @@ class _RealtimeViewState extends State<RealtimeView>
     }
   }
 
-  Future<void> _navigateToDetail(_LiveResult detection) async {
+  Future<void> _navigateToDetail(YOLOResult detection) async {
     if (!mounted || _isNavigating) return;
     _isNavigating = true;
     _resetStable();
@@ -249,18 +139,9 @@ class _RealtimeViewState extends State<RealtimeView>
       return;
     }
 
-    // Capture foto kamera
-    Uint8List? photoBytes;
-    final camera = _camera;
-    try {
-      if (camera != null && camera.value.isStreamingImages) {
-        await camera.stopImageStream();
-      }
-      final photo = await camera?.takePicture();
-      if (photo != null) photoBytes = await photo.readAsBytes();
-    } catch (e) {
-      debugPrint('[RealtimeView] gagal mengambil foto: $e');
-    }
+    // Capture foto kamera (tanpa overlay)
+    final ctrl = context.read<RealtimeController>();
+    final photo = await ctrl.viewController.capturePhoto(withOverlays: true);
     if (!mounted) {
       _isNavigating = false;
       return;
@@ -275,7 +156,7 @@ class _RealtimeViewState extends State<RealtimeView>
         classIndex: detection.classIndex,
         className: species.nama,
         confidence: detection.confidence,
-        photo: photoBytes,
+        photo: photo,
       );
     } catch (e) {
       debugPrint('[RealtimeView] gagal menyimpan riwayat: $e');
@@ -291,7 +172,7 @@ class _RealtimeViewState extends State<RealtimeView>
         className: detection.className,
         confidence: detection.confidence,
         species: species,
-        photo: photoBytes,
+        photo: photo,
         timestamp: timestamp,
       ),
     );
@@ -303,11 +184,6 @@ class _RealtimeViewState extends State<RealtimeView>
         _isNavigating = false;
         _topResult = null;
       });
-      if (_camera != null && !_camera!.value.isStreamingImages) {
-        await _camera!.startImageStream(_onCameraImage);
-      } else if (_camera == null) {
-        await _initCamera();
-      }
     }
   }
 
@@ -335,11 +211,15 @@ class _RealtimeViewState extends State<RealtimeView>
           body: Stack(
             fit: StackFit.expand,
             children: [
-              if (_isActive && _cameraReady && _camera != null)
-                _CameraPreviewCover(controller: _camera!)
-              else
-                const Center(
-                  child: CircularProgressIndicator(color: Colors.white),
+              if (_isActive)
+                YOLOView(
+                  modelPath: ctrl.modelPath,
+                  task: AppConstants.yoloTask,
+                  controller: ctrl.viewController,
+                  confidenceThreshold: AppConstants.confidenceThreshold,
+                  iouThreshold: AppConstants.iouThreshold,
+                  useGpu: false,
+                  onResult: _onDetectionResult,
                 ),
               const _TopBar(),
               _DetectionInfoCard(
@@ -350,29 +230,6 @@ class _RealtimeViewState extends State<RealtimeView>
           ),
         );
       },
-    );
-  }
-}
-
-// ── Camera preview (cover fit, sesuai orientasi sensor) ─────────────────────
-
-class _CameraPreviewCover extends StatelessWidget {
-  final CameraController controller;
-  const _CameraPreviewCover({required this.controller});
-
-  @override
-  Widget build(BuildContext context) {
-    final previewSize = controller.value.previewSize;
-    if (previewSize == null) return const SizedBox();
-    return Positioned.fill(
-      child: FittedBox(
-        fit: BoxFit.cover,
-        child: SizedBox(
-          width: previewSize.height,
-          height: previewSize.width,
-          child: CameraPreview(controller),
-        ),
-      ),
     );
   }
 }
@@ -461,7 +318,7 @@ class _CircleIconButton extends StatelessWidget {
 // ── Detection info card (bottom) ───────────────────────────────────────────
 
 class _DetectionInfoCard extends StatelessWidget {
-  final _LiveResult? topResult;
+  final YOLOResult? topResult;
   final AnimationController controller;
   const _DetectionInfoCard({required this.topResult, required this.controller});
 
