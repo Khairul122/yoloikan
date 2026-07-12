@@ -34,11 +34,5 @@
     "nama": "Ikan Sarden",
     "deskripsi": "Ikan minyak berukuran kecil yang hidup bergerombol dalam jumlah besar. Sering dijumpai dalam bentuk olahan kalengan, namun dalam kondisi segar memiliki kulit keperakan yang sangat terang.",
     "warna": "#FFA500"
-  },
-  {
-    "id": 6,
-    "nama": "Non Ikan",
-    "deskripsi": "Kategori objek deteksi selain ikan asli, mencakup: (1) lukisan, ilustrasi, atau gambar ikan yang bukan foto nyata, (2) objek yang bentuknya mirip ikan tapi bukan ikan seperti sampah laut, terumbu karang, tanaman air, alat tangkap, atau biota laut lain (kepiting, cumi-cumi), dan (3) objek tidak dikenal lainnya. Akurasi deteksi pada gambar lukisan/ilustrasi bergantung pada data latih model.",
-    "warna": "#A9A9A9"
   }
 ]

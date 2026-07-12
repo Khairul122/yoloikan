@@ -7,7 +7,7 @@ class AppConstants {
   static const String appTagline = 'Klasifikasi Jenis Ikan';
   static const String appVersion = '1.0.0';
 
-  static const String modelPath = 'assets/models/best_float32.tflite';
+  static const String modelPath = 'assets/models/best.tflite';
 
   // task bisa null — library akan baca dari metadata model secara otomatis
   static const YOLOTask yoloTask = YOLOTask.detect;
