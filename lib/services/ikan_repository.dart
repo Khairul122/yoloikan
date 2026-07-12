@@ -28,15 +28,10 @@ class IkanRepository {
 
   /// Cari spesies berdasarkan nama kelas (case-insensitive, `_`==` `).
   ///
-  /// Diperlukan karena `YOLO.predict` (single image) pada
-  /// ultralytics_yolo 0.6.2 tidak menyertakan key `classIndex` pada hasil
-  /// deteksinya, sehingga `YOLOResult.fromMap` selalu mengembalikan
-  /// `classIndex = 0`. Nama kelas (`className`) tetap akurat, jadi
-  /// digunakan untuk mencocokkan entri di ikan.json.
-  ///
-  /// Beberapa label pada model hasil training memakai underscore (mis.
-  /// "ikan_cakalang" dari data.yaml) sementara ikan.json memakai spasi
-  /// ("Ikan Cakalang"), jadi keduanya dinormalisasi sebelum dibandingkan.
+  /// Diperlukan karena hasil deteksi `flutter_vision` (`yoloOnImage`/
+  /// `yoloOnFrame`) hanya menyertakan nama kelas (`tag`) dari `labels.txt`,
+  /// bukan `classIndex` mentah — jadi `className` dipakai untuk mencocokkan
+  /// entri di ikan.json dan meresolusi `classIndex` yang benar.
   static Future<IkanModel?> findByName(String className) async {
     final all = await loadAll();
     final normalized = _normalize(className);

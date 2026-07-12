@@ -1,5 +1,3 @@
-import 'package:ultralytics_yolo/ultralytics_yolo.dart';
-
 class AppConstants {
   AppConstants._();
 
@@ -8,9 +6,12 @@ class AppConstants {
   static const String appVersion = '1.0.0';
 
   static const String modelPath = 'assets/models/best.tflite';
+  static const String labelsPath = 'assets/models/labels.txt';
 
-  // task bisa null — library akan baca dari metadata model secara otomatis
-  static const YOLOTask yoloTask = YOLOTask.detect;
+  // Kepala deteksi model (single output tensor 1x(4+nc)x8400) kompatibel
+  // dengan parser "yolov8" flutter_vision terlepas dari versi arsitektur
+  // training (v8/v11 memakai format output yang sama).
+  static const String yoloModelVersion = 'yolov8';
 
   static const double confidenceThreshold = 0.40;
   static const double identificationThreshold = 0.65;

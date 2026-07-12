@@ -5,12 +5,17 @@ class DetectionResult {
   final String label;
   final double confidence;
   final Rect? boundingBox;
+  /// Kotak deteksi dinormalisasi (0.0-1.0 relatif terhadap dimensi gambar),
+  /// dipakai untuk menggambar overlay di atas foto tanpa perlu tahu ukuran
+  /// piksel asli gambar yang ditampilkan.
+  final Rect? normalizedBox;
   final int classIndex;
 
   const DetectionResult({
     required this.label,
     required this.confidence,
     this.boundingBox,
+    this.normalizedBox,
     this.classIndex = -1,
   });
 

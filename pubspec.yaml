@@ -34,7 +34,14 @@ dependencies:
     sdk: flutter
 
   cupertino_icons: ^1.0.8
-  ultralytics_yolo: ^0.6.1
+  # Fork lokal (packages/flutter_vision_local) dari flutter_vision 2.0.0,
+  # ditambal agar mendukung model TFLite berlayout NCHW [1,3,H,W] (best.tflite
+  # kita) — lihat komentar di FlutterVisionPlugin.java & Yolov8.java untuk
+  # detail patch. Menggantikan ultralytics_yolo karena native libLiteRt.so
+  # bundelan-nya crash (SIGSEGV) di device tertentu, tidak bisa ditambal.
+  flutter_vision:
+    path: packages/flutter_vision_local
+  camera: ^0.11.2+1
   image_picker: ^1.1.2
   image: ^4.8.0
   permission_handler: ^11.3.1

@@ -1,8 +1,9 @@
 import 'dart:io';
+import 'dart:ui';
 import 'package:flutter/foundation.dart';
+import 'package:flutter_vision/flutter_vision.dart';
 import 'package:image/image.dart' as img;
 import 'package:image_picker/image_picker.dart';
-import 'package:ultralytics_yolo/ultralytics_yolo.dart';
 import '../core/constants/app_constants.dart';
 import '../models/detection_result.dart';
 import '../services/ikan_repository.dart';
@@ -14,14 +15,25 @@ enum GalleryError { modelLoadFailed, noDetection, unknown }
 
 class _ModelLoadException implements Exception {}
 
+typedef _OrientedImage = ({Uint8List bytes, int width, int height});
+
 /// Decode + koreksi orientasi EXIF, dijalankan di isolate terpisah (lewat
 /// `compute()`) karena untuk foto resolusi besar dari kamera HP, proses
 /// decode+encode JPEG ini cukup berat untuk memblokir main thread (sempat
-/// menyebabkan ANR saat dijalankan langsung di main isolate).
-Uint8List _bakeOrientation(Uint8List rawBytes) {
+/// menyebabkan ANR saat dijalankan langsung di main isolate). Dimensi hasil
+/// dikembalikan juga agar overlay bounding box bisa digambar sesuai skala
+/// gambar yang benar-benar dikirim ke model.
+_OrientedImage _bakeOrientation(Uint8List rawBytes) {
   final decoded = img.decodeImage(rawBytes);
-  if (decoded == null) return rawBytes;
-  return Uint8List.fromList(img.encodeJpg(img.bakeOrientation(decoded)));
+  if (decoded == null) {
+    throw Exception('Gagal membaca gambar');
+  }
+  final oriented = img.bakeOrientation(decoded);
+  return (
+    bytes: Uint8List.fromList(img.encodeJpg(oriented)),
+    width: oriented.width,
+    height: oriented.height,
+  );
 }
 
 class GalleryController extends ChangeNotifier {
@@ -30,7 +42,10 @@ class GalleryController extends ChangeNotifier {
   bool _isLoading = false;
   GalleryError? _error;
   String? _errorDetail;
-  YOLO? _yolo;
+  FlutterVision? _vision;
+  bool _modelLoaded = false;
+  int? _imageWidth;
+  int? _imageHeight;
 
   File? get pickedImage => _pickedImage;
   List<DetectionResult> get results => _results;
@@ -38,27 +53,34 @@ class GalleryController extends ChangeNotifier {
   GalleryError? get error => _error;
   String? get errorDetail => _errorDetail;
   bool get hasResults => _results.isNotEmpty;
+  /// Lebar/tinggi gambar (setelah koreksi orientasi EXIF) yang dikirim ke
+  /// model — dipakai View untuk menggambar overlay bounding box sesuai skala.
+  int? get imageWidth => _imageWidth;
+  int? get imageHeight => _imageHeight;
 
   Future<void> _initYolo() async {
-    if (_yolo != null && _yolo!.isInitialized) return;
-    await _yolo?.dispose();
-    _yolo = YOLO(
-      modelPath: AppConstants.modelPath,
-      task: AppConstants.yoloTask,
-      useGpu: false, // CPU lebih stabil di semua device
-    );
-    final success = await _yolo!.loadModel();
-    if (!success) {
-      await _yolo?.dispose();
-      _yolo = null;
+    if (_modelLoaded && _vision != null) return;
+    _vision = FlutterVision();
+    try {
+      await _vision!.loadYoloModel(
+        modelPath: AppConstants.modelPath,
+        labels: AppConstants.labelsPath,
+        modelVersion: AppConstants.yoloModelVersion,
+        quantization: false,
+        numThreads: 2,
+        useGpu: false,
+        isAsset: true,
+      );
+    } catch (_) {
+      _vision = null;
+      _modelLoaded = false;
       throw _ModelLoadException();
     }
+    _modelLoaded = true;
   }
 
   Future<void> pickAndDetect(ImageSource source) async {
-    // Cegah pemanggilan bersamaan (mis. tap FAB dua kali cepat) — tanpa ini,
-    // dua invokasi bisa saling men-dispose instance _yolo milik satu sama
-    // lain di tengah proses loadModel/predict (lihat _initYolo).
+    // Cegah pemanggilan bersamaan (mis. tap FAB dua kali cepat).
     if (_isLoading) return;
 
     _error = null;
@@ -67,9 +89,6 @@ class GalleryController extends ChangeNotifier {
     notifyListeners();
 
     try {
-      // Di dalam try: ImagePicker bisa melempar PlatformException (mis.
-      // "already_active", error kamera/storage) yang sebelumnya tidak
-      // tertangkap sama sekali dan bisa membuat app crash.
       final picker = ImagePicker();
       final XFile? file = await picker.pickImage(
         source: source,
@@ -79,32 +98,40 @@ class GalleryController extends ChangeNotifier {
 
       _pickedImage = File(file.path);
       _results = [];
+      _imageWidth = null;
+      _imageHeight = null;
 
       await _initYolo();
       final rawFileBytes = await _pickedImage!.readAsBytes();
-      // Plugin native (BitmapFactory.decodeByteArray) mengabaikan EXIF
-      // orientation, jadi foto potret dari kamera HP (yang secara fisik
-      // disimpan landscape + flag rotasi EXIF) terbaca miring oleh model —
-      // menyebabkan confidence nyaris nol untuk semua kelas. "Bakes" rotasi
-      // EXIF ke piksel di sisi Dart sebelum bytes dikirim ke native, lewat
-      // compute() agar tidak memblokir main thread.
-      final imageBytes = await compute(_bakeOrientation, rawFileBytes);
-      final raw = await _yolo!.predict(
-        imageBytes,
-        confidenceThreshold: AppConstants.confidenceThreshold,
+      // BitmapFactory.decodeByteArray (dipakai plugin native) mengabaikan
+      // EXIF orientation, jadi foto potret dari kamera HP terbaca miring
+      // oleh model — menyebabkan confidence nyaris nol untuk semua kelas.
+      // Koreksi dilakukan di sisi Dart lewat compute() (isolate terpisah)
+      // agar decode+encode gambar besar tidak memblokir main thread.
+      final oriented = await compute(_bakeOrientation, rawFileBytes);
+      _imageWidth = oriented.width;
+      _imageHeight = oriented.height;
+
+      final raw = await _vision!.yoloOnImage(
+        bytesList: oriented.bytes,
+        imageHeight: oriented.height,
+        imageWidth: oriented.width,
         iouThreshold: AppConstants.iouThreshold,
+        // flutter_vision (parser yolov8) memfilter kotak lewat
+        // classThreshold, bukan confThreshold — set keduanya sama.
+        confThreshold: AppConstants.confidenceThreshold,
+        classThreshold: AppConstants.confidenceThreshold,
       );
       _results = await _parseResults(raw);
-      if (_results.isEmpty) {
-        _error = GalleryError.noDetection;
-      }
     } on _ModelLoadException {
-      await _yolo?.dispose();
-      _yolo = null;
+      await _vision?.closeYoloModel();
+      _vision = null;
+      _modelLoaded = false;
       _error = GalleryError.modelLoadFailed;
     } catch (e) {
-      await _yolo?.dispose();
-      _yolo = null;
+      await _vision?.closeYoloModel();
+      _vision = null;
+      _modelLoaded = false;
       _error = GalleryError.unknown;
       _errorDetail = e.toString();
     } finally {
@@ -113,37 +140,58 @@ class GalleryController extends ChangeNotifier {
     }
   }
 
-  Future<List<DetectionResult>> _parseResults(Map<String, dynamic> raw) async {
-    final boxes = raw['boxes'] as List<dynamic>? ?? [];
+  Future<List<DetectionResult>> _parseResults(
+    List<Map<String, dynamic>> raw,
+  ) async {
+    final width = _imageWidth ?? 1;
+    final height = _imageHeight ?? 1;
     final mapped = <DetectionResult>[];
-    for (final b in boxes) {
+    for (final r in raw) {
       try {
-        final result = YOLOResult.fromMap(b as Map<dynamic, dynamic>);
-        if (result.confidence >= AppConstants.confidenceThreshold) {
-          // Catatan: pada single-image predict (ultralytics_yolo 0.6.2),
-          // map hasil deteksi tidak menyertakan key "classIndex", sehingga
-          // result.classIndex selalu 0. classIndex asli dicari ulang dari
-          // className lewat ikan.json.
-          final species = await IkanRepository.findByName(result.className);
-          final resolvedClassIndex =
-              species?.id ?? AppConstants.nonFishClassIndex;
+        final box = (r['box'] as List).cast<num>();
+        final confidence = box[4].toDouble();
+        final className = r['tag'] as String;
 
-          // Model tidak punya kelas "Non Ikan" sendiri — confidence rendah
-          // sering merupakan objek non-ikan, reklasifikasi ke "Non Ikan".
-          final isConfident =
-              result.confidence >= AppConstants.identificationThreshold;
-          mapped.add(
-            DetectionResult(
-              label: isConfident ? result.className : 'non_ikan',
-              confidence: result.confidence,
-              boundingBox: result.boundingBox,
-              classIndex: isConfident
-                  ? resolvedClassIndex
-                  : AppConstants.nonFishClassIndex,
+        // Model tidak punya kelas "Non Ikan" sendiri — confidence rendah
+        // sering merupakan objek non-ikan, reklasifikasi ke "Non Ikan".
+        final isConfident = confidence >= AppConstants.identificationThreshold;
+        final species = await IkanRepository.findByName(className);
+        final resolvedClassIndex = species?.id ?? AppConstants.nonFishClassIndex;
+
+        mapped.add(
+          DetectionResult(
+            label: isConfident ? className : 'non_ikan',
+            confidence: confidence,
+            boundingBox: Rect.fromLTRB(
+              box[0].toDouble(),
+              box[1].toDouble(),
+              box[2].toDouble(),
+              box[3].toDouble(),
             ),
-          );
-        }
+            normalizedBox: Rect.fromLTRB(
+              box[0].toDouble() / width,
+              box[1].toDouble() / height,
+              box[2].toDouble() / width,
+              box[3].toDouble() / height,
+            ),
+            classIndex: isConfident
+                ? resolvedClassIndex
+                : AppConstants.nonFishClassIndex,
+          ),
+        );
       } catch (_) {}
+    }
+    // Tidak ada box yang lolos confidenceThreshold — tampilkan sebagai
+    // "Non Ikan" alih-alih pesan error, karena model memang tidak punya
+    // kelas non-ikan sendiri untuk kasus ini.
+    if (mapped.isEmpty) {
+      return [
+        const DetectionResult(
+          label: 'non_ikan',
+          confidence: 0,
+          classIndex: AppConstants.nonFishClassIndex,
+        ),
+      ];
     }
     mapped.sort((a, b) => b.confidence.compareTo(a.confidence));
     return mapped.take(1).toList();
@@ -155,12 +203,14 @@ class GalleryController extends ChangeNotifier {
     _error = null;
     _errorDetail = null;
     _isLoading = false;
+    _imageWidth = null;
+    _imageHeight = null;
     notifyListeners();
   }
 
   @override
   void dispose() {
-    _yolo?.dispose();
+    _vision?.closeYoloModel();
     super.dispose();
   }
 }

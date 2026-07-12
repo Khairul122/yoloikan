@@ -217,7 +217,7 @@ class _ImagePreviewZone extends StatelessWidget {
         ),
         clipBehavior: Clip.antiAlias,
         child: ctrl.pickedImage != null
-            ? Image.file(ctrl.pickedImage!, fit: BoxFit.cover)
+            ? _ImageWithBoxes(ctrl: ctrl)
             : Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
@@ -230,6 +230,78 @@ class _ImagePreviewZone extends StatelessWidget {
                   Text(l10n.tapToPickPhoto, style: AppTextStyles.bodyMedium),
                 ],
               ),
+      ),
+    );
+  }
+}
+
+/// Menampilkan foto yang dipilih beserta overlay bounding box hasil deteksi.
+///
+/// Foto+kotak digambar di dalam `SizedBox` berukuran piksel asli (setelah
+/// koreksi EXIF), lalu di-scale bersama-sama lewat `FittedBox` — sehingga
+/// posisi kotak selalu pas dengan letak objek di foto, berapa pun ukuran
+/// tampilan pratinjau.
+class _ImageWithBoxes extends StatelessWidget {
+  final GalleryController ctrl;
+  const _ImageWithBoxes({required this.ctrl});
+
+  @override
+  Widget build(BuildContext context) {
+    final width = ctrl.imageWidth;
+    final height = ctrl.imageHeight;
+    if (width == null || height == null) {
+      return Image.file(ctrl.pickedImage!, fit: BoxFit.contain);
+    }
+    return FittedBox(
+      fit: BoxFit.contain,
+      child: SizedBox(
+        width: width.toDouble(),
+        height: height.toDouble(),
+        child: Stack(
+          fit: StackFit.expand,
+          children: [
+            Image.file(ctrl.pickedImage!, fit: BoxFit.fill),
+            for (final result in ctrl.results)
+              if (result.normalizedBox != null)
+                _BoundingBoxOverlay(
+                  box: result.normalizedBox!,
+                  imageWidth: width.toDouble(),
+                  imageHeight: height.toDouble(),
+                  isNonFish: result.classIndex == AppConstants.nonFishClassIndex,
+                ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _BoundingBoxOverlay extends StatelessWidget {
+  final Rect box;
+  final double imageWidth;
+  final double imageHeight;
+  final bool isNonFish;
+
+  const _BoundingBoxOverlay({
+    required this.box,
+    required this.imageWidth,
+    required this.imageHeight,
+    required this.isNonFish,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final color = isNonFish ? AppColors.onSurfaceVariant : AppColors.secondary;
+    return Positioned(
+      left: box.left * imageWidth,
+      top: box.top * imageHeight,
+      width: box.width * imageWidth,
+      height: box.height * imageHeight,
+      child: Container(
+        decoration: BoxDecoration(
+          border: Border.all(color: color, width: imageWidth * 0.003 + 2),
+          borderRadius: BorderRadius.circular(6),
+        ),
       ),
     );
   }
