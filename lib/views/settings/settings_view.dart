@@ -7,7 +7,6 @@ import '../../controllers/theme_controller.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/constants/app_constants.dart';
 import '../../core/constants/app_text_styles.dart';
-import '../../services/preferences_service.dart';
 import '../../widgets/responsive_center.dart';
 import '../../widgets/settings_widgets.dart';
 import 'about_page.dart';
@@ -20,16 +19,6 @@ class SettingsView extends StatefulWidget {
 }
 
 class _SettingsViewState extends State<SettingsView> {
-  bool _notificationEnabled = true;
-
-  @override
-  void initState() {
-    super.initState();
-    PreferencesService.getNotificationEnabled().then((value) {
-      if (mounted) setState(() => _notificationEnabled = value);
-    });
-  }
-
   Future<void> _confirmLogout(BuildContext context) async {
     final l10n = AppLocalizations.of(context)!;
     final confirmed = await showDialog<bool>(
@@ -110,15 +99,10 @@ class _SettingsViewState extends State<SettingsView> {
               const SizedBox(height: 10),
               GroupCard(
                 children: [
-                  PreferenceSwitchRow(
+                  ActionRow(
                     icon: Icons.notifications_outlined,
                     label: l10n.notification,
-                    subtitle: l10n.notificationDesc,
-                    value: _notificationEnabled,
-                    onChanged: (v) {
-                      setState(() => _notificationEnabled = v);
-                      PreferencesService.setNotificationEnabled(v);
-                    },
+                    onTap: () => _showComingSoonDialog(context),
                   ),
                   PreferenceSwitchRow(
                     icon: Icons.dark_mode_outlined,

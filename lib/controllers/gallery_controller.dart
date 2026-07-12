@@ -1,5 +1,5 @@
 import 'dart:io';
-import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:ultralytics_yolo/ultralytics_yolo.dart';
 import '../core/constants/app_constants.dart';
@@ -45,21 +45,30 @@ class GalleryController extends ChangeNotifier {
   }
 
   Future<void> pickAndDetect(ImageSource source) async {
+    // Cegah pemanggilan bersamaan (mis. tap FAB dua kali cepat) — tanpa ini,
+    // dua invokasi bisa saling men-dispose instance _yolo milik satu sama
+    // lain di tengah proses loadModel/predict (lihat _initYolo).
+    if (_isLoading) return;
+
     _error = null;
     _errorDetail = null;
-    final picker = ImagePicker();
-    final XFile? file = await picker.pickImage(
-      source: source,
-      imageQuality: 90,
-    );
-    if (file == null) return;
-
-    _pickedImage = File(file.path);
-    _results = [];
     _isLoading = true;
     notifyListeners();
 
     try {
+      // Di dalam try: ImagePicker bisa melempar PlatformException (mis.
+      // "already_active", error kamera/storage) yang sebelumnya tidak
+      // tertangkap sama sekali dan bisa membuat app crash.
+      final picker = ImagePicker();
+      final XFile? file = await picker.pickImage(
+        source: source,
+        imageQuality: 90,
+      );
+      if (file == null) return;
+
+      _pickedImage = File(file.path);
+      _results = [];
+
       await _initYolo();
       final imageBytes = await _pickedImage!.readAsBytes();
       final raw = await _yolo!.predict(
@@ -67,6 +76,11 @@ class GalleryController extends ChangeNotifier {
         confidenceThreshold: AppConstants.confidenceThreshold,
         iouThreshold: AppConstants.iouThreshold,
       );
+      if (kDebugMode) {
+        for (final b in (raw['boxes'] as List<dynamic>? ?? [])) {
+          debugPrint('[GalleryController] raw box: $b');
+        }
+      }
       _results = await _parseResults(raw);
       if (_results.isEmpty) {
         _error = GalleryError.noDetection;
