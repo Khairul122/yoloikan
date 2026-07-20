@@ -2,7 +2,7 @@
 
 > Update file ini setiap kali ada perubahan pada project.
 
-**Last updated:** 2026-06-10 (update 37)
+**Last updated:** 2026-07-20 (update 38)
 
 ---
 
@@ -89,6 +89,12 @@ assets/
 ---
 
 ## Changelog
+
+### 2026-07-20 (update 38)
+- `flutter build apk --release` → `build/app/outputs/flutter-apk/app-release.apk` (284.9MB). 
+- Bumped app version to `1.0.1+2` in `pubspec.yaml` and `1.0.1` in `lib/core/constants/app_constants.dart`.
+- Optimized Gradle memory config in `gradle.properties` (`-Xmx2G` and metaspace `512m`) to resolve Windows JVM out-of-memory build daemon crash.
+- Created and successfully pushed Git tag `v1.0.1` to GitHub origin.
 
 ### 2026-06-10 (update 37)
 - `flutter build apk --release` → `build/app/outputs/flutter-apk/app-release.apk` (118.3MB). Signing masih fallback ke debug (`android/key.properties` belum ada), `applicationId` masih placeholder `com.example.yoloikan` — cukup untuk instal/uji manual, **belum siap publish ke Play Store**.
