@@ -10,8 +10,8 @@
 
 Fish Scan adalah aplikasi Flutter untuk **identifikasi spesies ikan**
 melalui:
-- **Upload Galeri**: pilih foto dari galeri/kamera → dianalisis sekali (`YOLO.predict`)
-- **Live Detection**: kamera real-time → deteksi terus-menerus (`YOLOView`),
+- **Upload Galeri**: pilih foto dari galeri/kamera → dianalisis sekali (`FlutterVision.yoloOnImage`)
+- **Live Detection**: kamera real-time → deteksi terus-menerus (`camera` stream + `FlutterVision`),
   auto-navigasi ke halaman detail saat deteksi stabil 1.5 detik
 
 Hasil deteksi disimpan ke **Riwayat Deteksi** secara lokal (file `history.json`
@@ -21,16 +21,16 @@ di folder dokumen aplikasi, lihat `lib/services/history_repository.dart`).
 
 | File | Peran |
 |---|---|
-| `assets/models/best_float32.tflite` | Model YOLO hasil training/fine-tune (TFLite) |
+| `assets/models/best.tflite` | Model YOLO hasil training/fine-tune (TFLite) |
 | `assets/models/ikan.json` | Metadata 6 spesies ikan + 1 kategori "Non Ikan" (nama, deskripsi, warna) |
 | `lib/core/constants/app_constants.dart` | Path model, task, threshold confidence/identifikasi/IoU |
 | `lib/services/ikan_repository.dart` | Load & lookup `ikan.json` (`findById`, `findByName`) |
-| `lib/controllers/gallery_controller.dart` | Inferensi single-image + parsing hasil |
-| `lib/controllers/realtime_controller.dart`, `lib/views/realtime/realtime_view.dart` | Inferensi real-time via `YOLOView` |
+| `lib/controllers/gallery_controller.dart` | Inferensi single-image + parsing hasil (`FlutterVision`) |
+| `lib/controllers/realtime_controller.dart`, `lib/views/realtime/realtime_view.dart` | Inferensi real-time via `camera` + `FlutterVision` |
 
 ## 3. Cara Mengganti / Melatih Ulang Model (Transfer Learning)
 
-Model `best_float32.tflite` adalah hasil **transfer learning** dari model
+Model `best.tflite` adalah hasil **transfer learning** dari model
 dasar YOLO (mis. YOLOv8n/YOLOv11n) yang di-*fine-tune* dengan dataset foto
 ikan untuk 6 kelas pada bagian §2 `studi.md`. Untuk melatih ulang / menambah
 kelas:
@@ -55,7 +55,7 @@ kelas:
    ```bash
    yolo export model=runs/detect/train/weights/best.pt format=tflite imgsz=640
    ```
-   Hasilnya `best_float32.tflite` (atau varian `float16`/`int8` untuk model
+   Hasilnya `best.tflite` (atau varian `float16`/`int8` untuk model
    lebih kecil — perhatikan trade-off ukuran vs akurasi vs kecepatan).
 4. **Integrasi ke app**:
    - Salin file `.tflite` baru ke `assets/models/`, update
@@ -68,12 +68,11 @@ kelas:
 
 ## 4. Catatan Penting / Pitfall yang Sudah Ditemukan
 
-- **`ultralytics_yolo 0.6.2` single-image predict tidak mengembalikan
-  `classIndex`** pada hasil box — hanya `className`. Resolusi `classIndex`
-  dilakukan via pencocokan nama (`IkanRepository.findByName`). Jika model
-  baru memakai **nama kelas yang berbeda** dari `ikan.json`, lookup ini akan
-  gagal (fallback ke "Non Ikan"). **Pastikan nama kelas hasil training sama
-  persis (case-insensitive) dengan field `nama` di `ikan.json`.**
+- **Migrasi ke `flutter_vision_local` & Layout Tensor NCHW `[1,3,H,W]`**:
+  Aplikasi sebelumnya menggunakan `ultralytics_yolo`, tetapi diganti ke paket fork lokal `packages/flutter_vision_local` (berbasis `flutter_vision 2.0.0`) karena library native `libLiteRt.so` bawaan `ultralytics_yolo` mengalami crash `SIGSEGV` pada beberapa perangkat Android.
+  Native Java (`FlutterVisionPlugin.java` & `Yolov8.java`) pada fork lokal ini telah ditambal agar dapat membaca tensor output NCHW `[1,3,H,W]` dari model `best.tflite`.
+- **Pencocokan Nama Kelas (`className`)**:
+  `FlutterVision.yoloOnImage()` mengembalikan tag `className`. Resolusi `classIndex` dilakukan via pencocokan nama (`IkanRepository.findByName`). Jika model baru memakai **nama kelas yang berbeda** dari `ikan.json`, lookup ini akan gagal (fallback ke "Non Ikan"). **Pastikan nama kelas hasil training sama persis (case-insensitive) dengan field `nama` di `ikan.json`.**
 - **Threshold ganda** (`confidenceThreshold` 0.40, `identificationThreshold`
   0.65) adalah workaround karena model **tidak punya kelas "Non Ikan"
   sendiri**. Jika model baru dilatih dengan kelas negatif eksplisit
@@ -82,7 +81,7 @@ kelas:
   - Menyederhanakan/menghapus logika reklasifikasi berbasis
     `identificationThreshold` di `gallery_controller.dart` &
     `realtime_view.dart`, karena model sudah bisa menjawab langsung.
-- **minSdk Android = 26** — syarat minimum dari `ultralytics_yolo`.
+- **minSdk Android = 26** — syarat minimum arsitektur build.
 - Inferensi CPU (`useGpu: false`) dipilih demi stabilitas lintas-device;
   jika model baru diuji stabil dengan GPU delegate, bisa dipertimbangkan
   untuk meningkatkan FPS pada Live Detection.

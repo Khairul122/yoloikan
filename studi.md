@@ -32,14 +32,14 @@ lokal (tanpa server/backend — seluruh data ada di penyimpanan device).
   iOS & Web ikut ter-generate tapi belum jadi fokus pengujian).
 - **minSdk Android**: 26, **compileSdk**: 36, **AGP**: 8.9.1, **Kotlin**: 2.3.0,
   **NDK**: 28.2.13676358 — versi-versi ini dinaikkan secara bertahap untuk
-  kompatibilitas dengan plugin `ultralytics_yolo` 0.6.x.
+  kompatibilitas native build Android & LiteRT dependencies.
 
 ### 2.2 Machine Learning
-- **`ultralytics_yolo: ^0.6.1`** (terinstall 0.6.2) — plugin Flutter resmi
-  Ultralytics untuk menjalankan model YOLO (`.tflite`) secara native di
-  Android/iOS. API yang dipakai: `YOLO`, `YOLOView`, `YOLOViewController`,
-  `YOLOTask`, `YOLOResult`.
-- **TensorFlow Lite** — format model akhir (`assets/models/best_float32.tflite`),
+- **`flutter_vision`** (fork lokal: `packages/flutter_vision_local`, berbasis `flutter_vision` 2.0.0) —
+  menggantikan `ultralytics_yolo` karena pustaka native `libLiteRt.so` bawaan `ultralytics_yolo` mengalami crash (`SIGSEGV`) pada beberapa perangkat.
+  Fork lokal ini ditambal pada `FlutterVisionPlugin.java` & `Yolov8.java` agar mendukung tensor TFLite berlayout NCHW (`[1, 3, H, W]`).
+- **`camera: ^0.11.2+1`** — mengelola stream gambar kamera live secara native untuk deteksi real-time.
+- **TensorFlow Lite** — format model akhir (`assets/models/best.tflite`),
   hasil export dari model YOLO yang sudah difine-tune untuk 6 kelas ikan.
 - Inferensi dijalankan **di CPU** (`useGpu: false`) demi stabilitas lintas
   perangkat.
@@ -95,8 +95,8 @@ lib/
 │   ├── history_item.dart           # entri riwayat (id, classIndex, confidence, photoPath, timestamp)
 │   └── ikan_model.dart             # data spesies dari ikan.json (id, nama, deskripsi, warna)
 ├── controllers/
-│   ├── gallery_controller.dart     # logic upload galeri/kamera + parsing hasil YOLO
-│   ├── realtime_controller.dart    # logic kamera live (YOLOViewController)
+│   ├── gallery_controller.dart     # logic upload galeri/kamera + parsing hasil YOLO via flutter_vision
+│   ├── realtime_controller.dart    # setup & lifecycle FlutterVision untuk kamera live
 │   ├── theme_controller.dart       # persist & toggle dark/light mode
 │   └── locale_controller.dart      # persist & toggle bahasa ID/EN
 ├── services/
@@ -120,7 +120,7 @@ lib/
     └── app_localizations*.dart         # hasil generate (flutter gen-l10n)
 
 assets/
-├── models/best_float32.tflite      # model YOLO terkompilasi
+├── models/best.tflite              # model YOLO terkompilasi (TFLite)
 ├── models/ikan.json                # metadata 6 spesies + 1 kategori "Non Ikan"
 └── images/, icon/
 ```
@@ -133,8 +133,8 @@ assets/
 - **Framework**: Ultralytics YOLO, **task: `YOLOTask.detect`** (object
   detection — bounding box + label + confidence, bukan whole-image
   classification).
-- **Format**: TensorFlow Lite (`best_float32.tflite`), dijalankan on-device
-  via plugin `ultralytics_yolo`.
+- **Format**: TensorFlow Lite (`best.tflite`), dijalankan on-device
+  via plugin `flutter_vision` (fork lokal `packages/flutter_vision_local`).
 
 ### 4.2 Kelas Model
 Model dilatih untuk **6 spesies ikan** (lihat `assets/models/ikan.json`):
@@ -173,7 +173,7 @@ static const double iouThreshold              = 0.45; // non-max suppression
 Gambar (galeri/kamera)
    │
    ▼
-YOLO.predict() / YOLOView (real-time)
+FlutterVision.yoloOnImage() / camera stream (real-time)
    │  → list bounding box: { className, confidence, classIndex?, box }
    ▼
 confidence >= 0.40?  ── tidak → dibuang (noDetection)
@@ -187,14 +187,12 @@ Ambil hasil confidence tertinggi (top-1)
 Tampilkan (ResultCard / overlay kamera) + simpan ke Riwayat Deteksi
 ```
 
-> **Catatan teknis penting**: pada `ultralytics_yolo 0.6.2`, hasil
-> `YOLO.predict()` (single image, dipakai di mode Galeri) **tidak
-> menyertakan key `classIndex`** pada map box — hanya `className` (string).
-> `YOLOResult.fromMap` fallback ke `classIndex = 0` bila dipakai langsung,
-> sehingga `classIndex` yang benar **selalu** di-resolve ulang via
-> `IkanRepository.findByName(className)` yang mencocokkan nama kelas ke
-> `ikan.json` (lihat `gallery_controller.dart`). Ini adalah bug yang sudah
-> diperbaiki — jangan pernah memakai `classIndex` mentah dari hasil predict.
+> **Catatan teknis penting**: aplikasi menggunakan plugin custom lokal
+> `packages/flutter_vision_local` (fork `flutter_vision 2.0.0`). Native Java
+> (`FlutterVisionPlugin.java` & `Yolov8.java`) ditambal khusus untuk membaca layout
+> NCHW `[1, 3, H, W]`. Hasil deteksi `yoloOnImage` dikembalikan berupa list bounding
+> box dan nama label (`tag`). Kode lalu mencocokkan `tag` ke `ikan.json` via
+> `IkanRepository.findByName(className)` untuk mendapatkan `classIndex` yang tepat.
 
 ### 4.5 Ekspektasi Performa per Jenis Input
 (detail & matriks lengkap di `perbandingan.md`)
@@ -216,7 +214,7 @@ Tampilkan (ResultCard / overlay kamera) + simpan ke Riwayat Deteksi
 
 ### 5.2 Upload Galeri/Kamera (`GalleryController` + `GalleryView`)
 - Bottom sheet pilih sumber: kamera (request izin) atau galeri.
-- `YOLO.predict()` → `_parseResults` (async): filter threshold, resolve
+- `FlutterVision.yoloOnImage()` → `_parseResults` (async): filter threshold, resolve
   `classIndex` via nama kelas, ambil top-1 (`take(1)`).
 - Error ditangani via enum `GalleryError` (modelLoadFailed/noDetection/unknown)
   → pesan ber-locale.
@@ -224,7 +222,7 @@ Tampilkan (ResultCard / overlay kamera) + simpan ke Riwayat Deteksi
   navigasi ke `SpeciesDetailView`.
 
 ### 5.3 Deteksi Real-time (`RealtimeController` + `RealtimeView`)
-- `YOLOView` dengan bounding box overlay native, `setNumItemsThreshold(1)`
+- Deteksi real-time menggunakan stream dari paket `camera` dikombinasikan dengan `FlutterVision`, `setNumItemsThreshold(1)`
   (hanya tampilkan 1 box confidence tertinggi).
 - Top-1 result dipantau via `Timer` stabilitas 1.5 detik (reset jika spesies
   berubah) + `AnimationController` progress bar "Mengidentifikasi...".
@@ -289,9 +287,11 @@ Tampilkan (ResultCard / overlay kamera) + simpan ke Riwayat Deteksi
   real-time, detail spesies, riwayat deteksi, dark mode, i18n ID/EN,
   pengaturan) **selesai dan berjalan** — `flutter analyze` konsisten 0 issues
   di setiap update.
-- **Bug-bug signifikan yang sudah diperbaiki**:
+- **Bug-bug & masalah teknis signifikan yang sudah diperbaiki**:
+  - Crash `SIGSEGV` native pada `ultralytics_yolo` pada perangkat tertentu →
+    diganti dengan paket fork lokal `packages/flutter_vision_local` (ditambal untuk layout NCHW `[1, 3, H, W]`) + paket `camera`.
   - `classIndex` salah pada hasil upload galeri (selalu fallback ke 0) →
-    fixed via resolusi berdasarkan `className`.
+    fixed via resolusi berdasarkan `className` (`IkanRepository.findByName`).
   - Riwayat deteksi tidak konsisten/hilang akibat race condition pada
     `SharedPreferences` → diganti penyimpanan file JSON dengan write-queue.
   - Riwayat tidak auto-refresh setelah scan baru → fixed dengan
