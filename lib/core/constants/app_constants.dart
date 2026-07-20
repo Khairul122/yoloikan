@@ -3,7 +3,7 @@ class AppConstants {
 
   static const String appName = 'FishScan';
   static const String appTagline = 'Klasifikasi Jenis Ikan';
-  static const String appVersion = '1.0.0';
+  static const String appVersion = '1.0.1';
 
   static const String modelPath = 'assets/models/best.tflite';
   static const String labelsPath = 'assets/models/labels.txt';
