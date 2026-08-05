@@ -96,5 +96,22 @@
         "type": "String"
       }
     }
-  }
+  },
+
+  "loginTitle": "Masuk",
+  "loginSubTitle": "Silakan masuk ke akun FishScan Anda",
+  "usernameLabel": "Username",
+  "usernameHint": "Masukkan username",
+  "passwordLabel": "Password",
+  "passwordHint": "Masukkan password",
+  "loginButton": "Masuk",
+  "loginSuccessTitle": "Login Berhasil",
+  "loginSuccessMsg": "Selamat datang kembali, JULIANA SARI!",
+  "loginFailedTitle": "Login Gagal",
+  "loginFailedMsg": "Username atau password yang Anda masukkan salah. Silakan coba lagi.",
+  "emptyUsernameMsg": "Username tidak boleh kosong",
+  "emptyPasswordMsg": "Password tidak boleh kosong",
+  "logoutSuccessTitle": "Berhasil Logout",
+  "logoutSuccessMsg": "Anda telah keluar dari aplikasi."
 }
+

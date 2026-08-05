@@ -12,6 +12,7 @@ import '../core/constants/app_colors_dark.dart';
 import '../core/constants/app_constants.dart';
 import '../views/detail/species_detail_view.dart';
 import '../views/gallery/gallery_view.dart';
+import '../views/login/login_view.dart';
 import '../views/realtime/realtime_view.dart';
 import '../views/shell/main_shell.dart';
 import '../views/splash/splash_view.dart';
@@ -70,6 +71,7 @@ class App extends StatelessWidget {
           initialRoute: '/splash',
           routes: {
             '/splash': (_) => const SplashView(),
+            AppConstants.loginRoute: (_) => const LoginView(),
             '/': (_) => const MainShell(),
             AppConstants.galleryRoute: (_) => const GalleryView(),
             AppConstants.realtimeRoute: (_) => ChangeNotifierProvider(

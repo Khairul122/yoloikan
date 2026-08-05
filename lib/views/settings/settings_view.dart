@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:yoloikan/l10n/app_localizations.dart';
 import 'package:provider/provider.dart';
 import '../../controllers/locale_controller.dart';
@@ -38,8 +37,76 @@ class _SettingsViewState extends State<SettingsView> {
         ],
       ),
     );
-    if (confirmed == true) {
-      await SystemNavigator.pop();
+    if (confirmed == true && context.mounted) {
+      await showDialog<void>(
+        context: context,
+        barrierDismissible: false,
+        builder: (ctx) => AlertDialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+          ),
+          backgroundColor: AppColors.surfaceContainerLowest,
+          title: Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: AppColors.success.withValues(alpha: 0.15),
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(
+                  Icons.check_circle_rounded,
+                  color: AppColors.success,
+                  size: 28,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Text(
+                  l10n.logoutSuccessTitle,
+                  style: AppTextStyles.titleMedium.copyWith(
+                    color: AppColors.onSurface,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          content: Text(
+            l10n.logoutSuccessMsg,
+            style: AppTextStyles.bodyMedium.copyWith(
+              color: AppColors.onSurfaceVariant,
+            ),
+          ),
+          actions: [
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.primary,
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 20,
+                  vertical: 10,
+                ),
+              ),
+              onPressed: () => Navigator.pop(ctx),
+              child: Text(
+                l10n.ok,
+                style: AppTextStyles.labelLarge.copyWith(color: Colors.white),
+              ),
+            ),
+          ],
+        ),
+      );
+
+      if (context.mounted) {
+        Navigator.of(context).pushNamedAndRemoveUntil(
+          AppConstants.loginRoute,
+          (route) => false,
+        );
+      }
     }
   }
 

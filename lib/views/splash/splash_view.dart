@@ -25,7 +25,9 @@ class _SplashViewState extends State<SplashView> {
       if (mounted) setState(() => _visible = true);
     });
     Timer(const Duration(seconds: 2), () {
-      if (mounted) Navigator.of(context).pushReplacementNamed('/');
+      if (mounted) {
+        Navigator.of(context).pushReplacementNamed(AppConstants.loginRoute);
+      }
     });
   }
 

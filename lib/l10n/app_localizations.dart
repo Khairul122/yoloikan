@@ -553,6 +553,96 @@ abstract class AppLocalizations {
   /// In id, this message translates to:
   /// **'Terjadi kesalahan: {message}'**
   String unknownErrorMsg(String message);
+
+  /// No description provided for @loginTitle.
+  ///
+  /// In id, this message translates to:
+  /// **'Masuk'**
+  String get loginTitle;
+
+  /// No description provided for @loginSubTitle.
+  ///
+  /// In id, this message translates to:
+  /// **'Silakan masuk ke akun FishScan Anda'**
+  String get loginSubTitle;
+
+  /// No description provided for @usernameLabel.
+  ///
+  /// In id, this message translates to:
+  /// **'Username'**
+  String get usernameLabel;
+
+  /// No description provided for @usernameHint.
+  ///
+  /// In id, this message translates to:
+  /// **'Masukkan username'**
+  String get usernameHint;
+
+  /// No description provided for @passwordLabel.
+  ///
+  /// In id, this message translates to:
+  /// **'Password'**
+  String get passwordLabel;
+
+  /// No description provided for @passwordHint.
+  ///
+  /// In id, this message translates to:
+  /// **'Masukkan password'**
+  String get passwordHint;
+
+  /// No description provided for @loginButton.
+  ///
+  /// In id, this message translates to:
+  /// **'Masuk'**
+  String get loginButton;
+
+  /// No description provided for @loginSuccessTitle.
+  ///
+  /// In id, this message translates to:
+  /// **'Login Berhasil'**
+  String get loginSuccessTitle;
+
+  /// No description provided for @loginSuccessMsg.
+  ///
+  /// In id, this message translates to:
+  /// **'Selamat datang kembali, JULIANA SARI!'**
+  String get loginSuccessMsg;
+
+  /// No description provided for @loginFailedTitle.
+  ///
+  /// In id, this message translates to:
+  /// **'Login Gagal'**
+  String get loginFailedTitle;
+
+  /// No description provided for @loginFailedMsg.
+  ///
+  /// In id, this message translates to:
+  /// **'Username atau password yang Anda masukkan salah. Silakan coba lagi.'**
+  String get loginFailedMsg;
+
+  /// No description provided for @emptyUsernameMsg.
+  ///
+  /// In id, this message translates to:
+  /// **'Username tidak boleh kosong'**
+  String get emptyUsernameMsg;
+
+  /// No description provided for @emptyPasswordMsg.
+  ///
+  /// In id, this message translates to:
+  /// **'Password tidak boleh kosong'**
+  String get emptyPasswordMsg;
+
+  /// No description provided for @logoutSuccessTitle.
+  ///
+  /// In id, this message translates to:
+  /// **'Berhasil Logout'**
+  String get logoutSuccessTitle;
+
+  /// No description provided for @logoutSuccessMsg.
+  ///
+  /// In id, this message translates to:
+  /// **'Anda telah keluar dari aplikasi.'**
+  String get logoutSuccessMsg;
 }
 
 class _AppLocalizationsDelegate

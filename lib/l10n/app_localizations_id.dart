@@ -247,4 +247,50 @@ class AppLocalizationsId extends AppLocalizations {
   String unknownErrorMsg(String message) {
     return 'Terjadi kesalahan: $message';
   }
+
+  @override
+  String get loginTitle => 'Masuk';
+
+  @override
+  String get loginSubTitle => 'Silakan masuk ke akun FishScan Anda';
+
+  @override
+  String get usernameLabel => 'Username';
+
+  @override
+  String get usernameHint => 'Masukkan username';
+
+  @override
+  String get passwordLabel => 'Password';
+
+  @override
+  String get passwordHint => 'Masukkan password';
+
+  @override
+  String get loginButton => 'Masuk';
+
+  @override
+  String get loginSuccessTitle => 'Login Berhasil';
+
+  @override
+  String get loginSuccessMsg => 'Selamat datang kembali, JULIANA SARI!';
+
+  @override
+  String get loginFailedTitle => 'Login Gagal';
+
+  @override
+  String get loginFailedMsg =>
+      'Username atau password yang Anda masukkan salah. Silakan coba lagi.';
+
+  @override
+  String get emptyUsernameMsg => 'Username tidak boleh kosong';
+
+  @override
+  String get emptyPasswordMsg => 'Password tidak boleh kosong';
+
+  @override
+  String get logoutSuccessTitle => 'Berhasil Logout';
+
+  @override
+  String get logoutSuccessMsg => 'Anda telah keluar dari aplikasi.';
 }

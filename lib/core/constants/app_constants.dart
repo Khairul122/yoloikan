@@ -25,4 +25,5 @@ class AppConstants {
   static const String galleryRoute = '/gallery';
   static const String realtimeRoute = '/realtime';
   static const String detailRoute = '/detail';
+  static const String loginRoute = '/login';
 }

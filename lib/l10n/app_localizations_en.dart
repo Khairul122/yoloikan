@@ -246,4 +246,50 @@ class AppLocalizationsEn extends AppLocalizations {
   String unknownErrorMsg(String message) {
     return 'An error occurred: $message';
   }
+
+  @override
+  String get loginTitle => 'Sign In';
+
+  @override
+  String get loginSubTitle => 'Please sign in to your FishScan account';
+
+  @override
+  String get usernameLabel => 'Username';
+
+  @override
+  String get usernameHint => 'Enter username';
+
+  @override
+  String get passwordLabel => 'Password';
+
+  @override
+  String get passwordHint => 'Enter password';
+
+  @override
+  String get loginButton => 'Sign In';
+
+  @override
+  String get loginSuccessTitle => 'Login Successful';
+
+  @override
+  String get loginSuccessMsg => 'Welcome back, JULIANA SARI!';
+
+  @override
+  String get loginFailedTitle => 'Login Failed';
+
+  @override
+  String get loginFailedMsg =>
+      'Incorrect username or password. Please try again.';
+
+  @override
+  String get emptyUsernameMsg => 'Username cannot be empty';
+
+  @override
+  String get emptyPasswordMsg => 'Password cannot be empty';
+
+  @override
+  String get logoutSuccessTitle => 'Logout Successful';
+
+  @override
+  String get logoutSuccessMsg => 'You have been logged out of the app.';
 }

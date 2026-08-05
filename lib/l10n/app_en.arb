@@ -96,5 +96,22 @@
         "type": "String"
       }
     }
-  }
+  },
+
+  "loginTitle": "Sign In",
+  "loginSubTitle": "Please sign in to your FishScan account",
+  "usernameLabel": "Username",
+  "usernameHint": "Enter username",
+  "passwordLabel": "Password",
+  "passwordHint": "Enter password",
+  "loginButton": "Sign In",
+  "loginSuccessTitle": "Login Successful",
+  "loginSuccessMsg": "Welcome back, JULIANA SARI!",
+  "loginFailedTitle": "Login Failed",
+  "loginFailedMsg": "Incorrect username or password. Please try again.",
+  "emptyUsernameMsg": "Username cannot be empty",
+  "emptyPasswordMsg": "Password cannot be empty",
+  "logoutSuccessTitle": "Logout Successful",
+  "logoutSuccessMsg": "You have been logged out of the app."
 }
+

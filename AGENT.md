@@ -2,7 +2,7 @@
 
 > Update file ini setiap kali ada perubahan pada project.
 
-**Last updated:** 2026-07-20 (update 38)
+**Last updated:** 2026-08-05 (update 39)
 
 ---
 
@@ -47,6 +47,9 @@
 | 35 | Fix: tombol "Logout" di Settings sebelumnya navigasi ke `/splash` (yang setelah 2 detik auto pindah ke `/` lewat timer) — diganti langsung `pushNamedAndRemoveUntil('/', (route) => false)` agar lebih langsung & tidak bergantung timer/route tambahan | ✅ Done |
 | 36 | Logout: app tidak punya sistem akun (profil statis), atas permintaan user "Logout" sekarang menutup aplikasi sepenuhnya via `SystemNavigator.pop()` setelah dialog konfirmasi | ✅ Done |
 | 37 | Build release APK (`flutter build apk --release`, signing fallback ke debug, applicationId masih `com.example.yoloikan`) → `build/app/outputs/flutter-apk/app-release.apk` (118.3MB); tambah dokumentasi `studi.md`, `transfer_knowledge.md`, `perbandingan.md` (analisis performa model untuk foto ikan asli vs lukisan/ilustrasi vs objek mirip ikan) | ✅ Done |
+| 38 | Release v1.0.1+2, optimize Gradle memory config (`-Xmx2G`), push git tag v1.0.1 | ✅ Done |
+| 39 | Halaman Login Statis: LoginView baru (username: `julianasari`, password: `12345678`), validasi input, alert dialog Login Berhasil (navigasi ke `/`) & Login Gagal, integrasi alur navigasi dari SplashView (`/splash` → `/login` → `/`) & Settings Logout (`/login`) | ✅ Done |
+| 40 | Penyesuaian Login & Logout: Hapus box teks kredensial demo di bawah form login; saat Logout di Settings, tampilkan Alert Dialog "Berhasil Logout" lalu navigasi ke halaman Login (`/login`) | ✅ Done |
 
 ---
 
